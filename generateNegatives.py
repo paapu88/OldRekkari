@@ -18,7 +18,7 @@ import numpy as np
 parser = argparse.ArgumentParser()
 
 parser.add_argument('-infiles', action='store', dest='infiles',
-                    help='filenames of positive images')
+                    help='filenames of negative images')
 parser.add_argument('-width', action='store', dest='width', 
                     help='width of image in pixels', default=80, type=int)
 parser.add_argument('-height', action='store', dest='height', 

@@ -29,6 +29,8 @@ parser.add_argument('-maxyangle', action='store', dest='maxyangle',
                     help='maxrot y', default='0.3')
 parser.add_argument('-maxzangle', action='store', dest='maxzangle', 
                     help='maxrot z',  default='0.5')
+parser.add_argument('-num', action='store', dest='num',
+                    help='number of distorted images to generate', default='100')
 args = parser.parse_args()
 
 cwd = os.getcwd()
@@ -49,6 +51,7 @@ for i, name in enumerate(names):
               '-maxxangle ' + args.maxxangle + ' ' +\
               '-maxyangle ' + args.maxyangle + ' ' +\
               '-maxzangle ' + args.maxzangle + ' ' +\
+              '-num ' + args.num + ' ' +\
               '-w ' + args.width + ' ' +\
               '-h ' + args.height + ' '
     subprocess.call(command, shell=True)
