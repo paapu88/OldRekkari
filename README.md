@@ -31,6 +31,8 @@ This writes 20000 files to dir ./Negativesrandom20000
 
 4 --------- Train the classifier --------------
 
+mkdir classifier   # otherwise you get error Parameters can not be written, because file classifier/params.xml can not be opened.
+
 Kauppi:~/PycharmProjects/Rekkari/Training>
 opencv_traincascade -data classifier -vec ./img/merged.vec -bg negatives.txt \
 -numStages 20 -minHitRate 0.999 -maxFalseAlarmRate 0.5 -numPos 10000 \
