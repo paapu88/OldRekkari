@@ -8,7 +8,7 @@
 4 go for the next picture (goto 1) ).
 
 Finnish car number plate: 118 mm x 442 mm
-try here 10x40 pixel
+try here 5x20 pixel
 """
 
 import sys
@@ -66,9 +66,12 @@ class MouseRectangle():
 class Example(QWidget):
 
 
-    def __init__(self):
+    def __init__(self, *args):
         super().__init__()
 
+        self.xpixel = int(sys.argv[1])
+        self.ypixel = int(sys.argv[2])
+        print("INIT:", self.xpixel, self.ypixel)
 
         self.mouse = MouseRectangle()
 
@@ -88,13 +91,14 @@ class Example(QWidget):
         layout.addWidget(self.contents)
         self.setLayout(layout)
         self.setWindowTitle("File Dialog demo")
-        
+
     def getNewName(self, oldname, subdir='img'):
         """
         get new filename with extra path
         """
         import os
-        dir = os.path.dirname(oldname)
+        #dir = os.path.dirname(oldname)
+        dir = os.getcwd()
         name = os.path.basename(oldname)
         #generate new dir if it doesnot exist
         newdir = dir + '/'+ subdir
@@ -103,19 +107,24 @@ class Example(QWidget):
         return newdir+'/'+'sample_'+name
 
     def showDialog(self):
+        import glob
+        import math
+        fnames =glob.glob('*jpg')
+        fnames = fnames + glob.glob('*png')
+        for fname in fnames:
+        #while True:
+        #    fname = QFileDialog.getOpenFileName(self,
+        #                                        'Open file',
+        #                                        '~/PycharmProjects/Rekkari')
 
-        while True:
-            fname = QFileDialog.getOpenFileName(self,
-                                                'Open file',
-                                                '~/PycharmProjects/Rekkari')
-
-            if fname[0]:
-                print(fname[0])
+        #    if fname[0]:
+        #        print(fname[0])
                 # cv2.namedWindow('image')
-                img = cv2.imread(fname[0],0)
+        #        img = cv2.imread(fname[0],0)
+                img = cv2.imread(fname,0)
                 print("size:", img.shape[0], img.shape[1])
-                if (img.shape[0] > 1000):
-                    img = cv2.resize(img, (int(img.shape[0]/2), int(img.shape[1]/2)))
+                #if (img.shape[0] > 1000):
+                #    img = cv2.resize(img, (int(img.shape[0]/2), int(img.shape[1]/2)))
                 clone = img.copy()
                 self.mouse.set_image(image=img)
                 cv2.imshow('image', img)
@@ -149,11 +158,25 @@ class Example(QWidget):
                 refPt = self.mouse.get_refPt()
                 if len(refPt) == 2:
                     roi = clone[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
-                    roi_scaled = cv2.resize(roi,(80,20))
-                    newname = self.getNewName(fname[0],'Rectangle')
+                    roi_scaled = cv2.resize(roi,(self.xpixel,self.ypixel))
+                    newname = self.getNewName(fname,'Rectangle')
                     print(newname)
                     cv2.imwrite(newname,roi_scaled)
-                    newname2 = self.getNewName(fname[0],'NotScaled')
+
+                    roi = clone[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
+                    roi_scaled = cv2.resize(roi,(2*self.xpixel,2*self.ypixel))
+                    newname = self.getNewName(fname,'Rectanglex2')
+                    print(newname)
+                    cv2.imwrite(newname,roi_scaled)
+
+                    roi = clone[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
+                    roi_scaled = cv2.resize(roi,(4*self.xpixel,4*self.ypixel))
+                    newname = self.getNewName(fname,'Rectanglex4')
+                    print(newname)
+                    cv2.imwrite(newname,roi_scaled)
+
+
+                    newname2 = self.getNewName(fname,'NotScaled')
                     cv2.imwrite(newname2,roi)                    
                     #cv2.imshow("ROI", roi)
                     #cv2.waitKey(0)
@@ -166,7 +189,7 @@ class Example(QWidget):
                     #print("writing with added rectangle :", newname)
                     #cv2.rectangle(clone, refPt[0], refPt[1], (255, 255, 255), -2)
                     cv2.circle(clone, center, radius, (255, 255, 255), thickness=-2)
-                    newname3 = self.getNewName(fname[0],'NegativeSamples')
+                    newname3 = self.getNewName(fname,'NegativeSamples')
                     cv2.imwrite(newname3,clone)
 
                 # close all open windows
@@ -176,5 +199,5 @@ class Example(QWidget):
 if __name__ == '__main__':
     
     app = QApplication(sys.argv)
-    ex = Example()
+    ex = Example(sys.argv)
     sys.exit(app.exec_())

@@ -41,7 +41,7 @@ class QtCapture(QtWidgets.QWidget):
                 #cv2.imshow('video', frame)
                 # Convert to RGB for QImage.
                 cv2.cvtColor(frame, cv2.COLOR_BGR2RGB, frame)
-                #cv2.flip(frame, 1, frame)
+                frame = cv2.transpose(frame)
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 rekkaris = self.rekkari_cascade.detectMultiScale(gray, 1.1, 5)
                 for (x,y,w,h) in rekkaris:
@@ -62,8 +62,8 @@ class QtCapture(QtWidgets.QWidget):
                 # If the number of captured frames is equal to the total number of frames,
                 # we stop
                 break
-            #if pos_frame > 150:
-            #    break
+            if pos_frame > 15:
+                break
 
 
 

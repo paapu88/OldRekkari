@@ -21,15 +21,15 @@ which writes to 'HumanProcessed' directory
    find ./positive_images -iname "*.jpg" > positives.txt
 4)
 create distorted positive samples:
-perl ../opencv-haar-classifier-training/bin/createsamples.pl  positives.txt negatives.txt samples 1000 "opencv_createsamples -maxxangle 0.1 -maxyangle 0.1 -maxzangle 0.2 -maxidev 50 -w 40 -h 10"
+perl ../opencv-haar-classifier-training/bin/createsamples.pl  positives.txt negatives.txt samples 1000 "opencv_createsamples -maxxangle 0.1 -maxyangle 0.1 -maxzangle 0.3 -maxidev 50 -w 20 -h 5"
 
-check: opencv_createsamples -w 40 -h 10 -vec ./samples/sample_pos4.jpg.vec
+check: opencv_createsamples -w 20 -h 5 -vec ./samples/*vec
 
 5)
 merge positive *.vec files to one vec file
 python2 ~/Dropbox/Apu/mergevec.py -v samples -o positives.vec
 #python2 ../opencv-haar-classifier-training/tools/mergevec.py -v samples -o positives.vec
-check: opencv_createsamples -w 40 -h 10 -vec positives.vec
+check: opencv_createsamples -w 20 -h 5 -vec positives.vec
 
 4) generate vec file of positive samples
 NOT USED
@@ -40,12 +40,12 @@ edit info.txt to contain pixel info
 opencv_createsamples -num 36 -info info.txt -w 80 -h 20 -vec positives.vec
 
 6) train:
-check: opencv_createsamples -w 40 -h 10 -vec positives.vec
+check: opencv_createsamples -w 20 -h 5 -vec positives.vec
 rm -f classifier/*
 mkdir classifier
 opencv_traincascade -data classifier -vec positives.vec -bg negatives.txt\
   -numStages 50 -minHitRate 0.999 -maxFalseAlarmRate 0.5 -numPos 1000 \
-  -numNeg 429 -w 40 -h 10 -mode ALL -precalcValBufSize 512\
+  -numNeg 429 -w 20 -h 5 -mode ALL -precalcValBufSize 512\
   -precalcIdxBufSize 512
 
 7) in rekkariDetection.py play with parameters
