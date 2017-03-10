@@ -1,14 +1,21 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
+# python3 ../../picture2rectangle.py 5
+# in a directory containing only jpg (png) files
+# the argument is the lowest resolution in pixe in y (vertical) direction
 """
-1)Read selected picture
+1) Read selected picture (automated)
 2) make rectangle to it by mouse lef button
-3) by right mouse button save selected rectangle in given accuracy in pixels,
-4 go for the next picture (goto 1) ).
+3) the dimension of x is forced by fixed ratio
+4) you can move the rectancle by up=w down=z left=a right=d, bigger=+, smaller=-
+5) when ready you can mouse click another plate or
+6) when done press c if mistakes press r and start picture again
+
+Various resolutions are in directories Rectangle*
+unscaled samples with original resolution of the rectangle box are in dir NotScaled
+Negative samples are in dir NegativeSamples (they have white ball on top of plates)
+
 
 Finnish car number plate: 118 mm x 442 mm
-try here 5x20 pixel
+
 """
 
 import sys
@@ -23,19 +30,30 @@ class MouseRectangle():
     """ get a rectangle by mouse"""
     def __init__(self):
         #super().__init__()
-        self.refPt = []
+        self.refPts = []
         self.cropping = False
         self.image = None
+        self.ratio = None
 
     def set_image(self, image):
         self.image = image
 
     def reset(self):
-        self.refPt = []
+        self.refPts = []
         self.cropping = False
 
-    def get_refPt(self):
-        return self.refPt
+    def get_refPts(self):
+        return self.refPts
+
+    def set_refPts(self, refPts):
+        self.refPts = refPts
+
+    def set_ratio(self, ratio):
+        # assume long eu plates
+        self.ratio = 442/118
+
+    def get_ratio(self):
+        return self.ratio
 
     def plot_xy(self,event,x,y,flags,param):
         if event == cv2.EVENT_LBUTTONDBLCLK:
@@ -48,18 +66,30 @@ class MouseRectangle():
         # (x, y) coordinates and indicate that cropping is being
         # performed
         if event == cv2.EVENT_LBUTTONDOWN:
-            self.refPt = [(x, y)]
+            self.refPts.append([x, y])
             self.cropping = True
+            print("S1", self.refPts)
 
         # check to see if the left mouse button was released
         elif event == cv2.EVENT_LBUTTONUP:
             # record the ending (x, y) coordinates and indicate that
             # the cropping operation is finished
-            self.refPt.append((x, y))
+
+            # set the ratio of the rectangle to be correct
+            if self.ratio is not None:
+                dy = y - self.refPts[-1][1]
+                x = self.refPts[-1][0]+ int(self.ratio * dy)
+
+            self.refPts.append([x, y])
             self.cropping = False
 
             # draw a rectangle around the region of interest
-            cv2.rectangle(self.image, self.refPt[0], self.refPt[1], (0, 255, 0), 2)
+            print("MOUSE UP", self.refPts)
+            for i in range(0,len(self.refPts),2):
+                print('pts', self.refPts[i])
+                cv2.rectangle(self.image, tuple(self.refPts[i]), tuple(self.refPts[i+1]), (0, 255, 255), 1)
+
+            #cv2.rectangle(self.image, tuple(self.refPts[0]), tuple(self.refPts[1]), (0, 255, 255), 5)
             cv2.imshow("image", self.image)
 
 
@@ -69,11 +99,17 @@ class Example(QWidget):
     def __init__(self, *args):
         super().__init__()
 
-        self.xpixel = int(sys.argv[1])
-        self.ypixel = int(sys.argv[2])
+        try:
+            self.xpixel = int(sys.argv[1])
+            self.ypixel = int(sys.argv[2])
+        except:
+            print("setting default values for pixels")
+            self.xpixel = 40
+            self.ypixel = 10
         print("INIT:", self.xpixel, self.ypixel)
 
         self.mouse = MouseRectangle()
+        self.mouse.set_ratio(self.xpixel/self.ypixel)
 
         layout = QVBoxLayout()
         self.btn = QPushButton("QFileDialog static method demo")
@@ -106,6 +142,42 @@ class Example(QWidget):
             os.makedirs(newdir)
         return newdir+'/'+'sample_'+name
 
+    def saveImage(self, image, ratio, fname):
+        import math
+        # if there are two reference points, then crop the region of interest
+        # from teh image and display it
+        refPts = self.mouse.get_refPts()
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # plot all plates to directories, first with native resolution , then in different resolutions
+        for i in range(0, len(refPts), 2):
+            newname = self.getNewName(fname, 'NotScaled')
+            clone = gray.copy()
+            roi = clone[refPts[i][1]:refPts[i+1][1], refPts[i][0]:refPts[i+1][0]]
+            cv2.imwrite(newname, roi)
+            for ypixel in range(self.ypixel, self.ypixel + 50, 1):
+                xpixel = int(ypixel * ratio)
+                clone = gray.copy()
+                roi = clone[refPts[i][1]:refPts[i+1][1], refPts[i][0]:refPts[i+1][0]]
+                print("SC:",xpixel, ypixel,refPts[i][1],refPts[i+1][1], refPts[i][0],refPts[i+1][0])
+                roi_scaled = cv2.resize(roi, (xpixel, ypixel))
+                newname = self.getNewName(fname, 'Rectangle'+'-'+str(xpixel)+'-'+str(ypixel))
+                cv2.imwrite(newname, roi_scaled)
+
+        # save negative sample with ball on top of all plates
+        clone = gray.copy()
+        for i in range(0, len(refPts), 2):
+            center = (int((refPts[i][0] + refPts[i+1][0]) / 2), int((refPts[i][1] + refPts[i+1][1]) / 2))
+            radius = int(0.5 * math.sqrt( \
+                (refPts[i][1] - refPts[i+1][1]) * \
+                (refPts[i][1] - refPts[i+1][1]) + \
+                (refPts[i][0] - refPts[i+1][0]) * \
+                (refPts[i][0] - refPts[i+1][0])))
+            # print("writing with added rectangle :", newname)
+            # cv2.rectangle(clone, refPts[0], refPts[1], (255, 255, 255), -2)
+            cv2.circle(clone, center, radius, (255, 255, 255), thickness=-2)
+        newname3 = self.getNewName(fname, 'NegativeSamples')
+        cv2.imwrite(newname3, clone)
+
     def showDialog(self):
         import glob
         import math
@@ -121,7 +193,7 @@ class Example(QWidget):
         #        print(fname[0])
                 # cv2.namedWindow('image')
         #        img = cv2.imread(fname[0],0)
-                img = cv2.imread(fname,0)
+                img = cv2.imread(fname)
                 print("size:", img.shape[0], img.shape[1])
                 #if (img.shape[0] > 1000):
                 #    img = cv2.resize(img, (int(img.shape[0]/2), int(img.shape[1]/2)))
@@ -141,56 +213,72 @@ class Example(QWidget):
                 while True:
                     # display the image and wait for a keypress
                     cv2.imshow("image", img)
-                    key = cv2.waitKey(1) & 0xFF
-
+                    key = cv2.waitKey(33)
+                    change = False
                     # if the 'r' key is pressed, reset the cropping region
                     if key == ord("r"):
                         img = clone.copy()
                         self.mouse.reset()
                         self.mouse.set_image(image=img)
 
+                    elif key == ord("+"):
+                        refPts = self.mouse.get_refPts()
+                        refPts[-2][0]= refPts[-2][0] - 1
+                        refPts[-2][1]= refPts[-2][1] - 1
+                        refPts[-1][0] = refPts[-1][0] + 1
+                        refPts[-1][1] = refPts[-1][1] + 1
+                        self.mouse.set_refPts(refPts)
+                        change = True
+                    elif key == ord("-"):
+                        refPts = self.mouse.get_refPts()
+                        refPts[-2][0] = refPts[-2][0] + 1
+                        refPts[-2][1] = refPts[-2][1] + 1
+                        refPts[-1][0] = refPts[-1][0] - 1
+                        refPts[-1][1] = refPts[-1][1] - 1
+                        self.mouse.set_refPts(refPts)
+                        change = True
+                    elif key == ord("w"):
+                        #up
+                        refPts = self.mouse.get_refPts()
+                        refPts[-2][1] = refPts[-2][1] - 1
+                        refPts[-1][1] = refPts[-1][1] - 1
+                        self.mouse.set_refPts(refPts)
+                        change = True
+                    elif key == ord("z"):
+                        #up
+                        refPts = self.mouse.get_refPts()
+                        refPts[-2][1] = refPts[-2][1] + 1
+                        refPts[-1][1] = refPts[-1][1] + 1
+                        self.mouse.set_refPts(refPts)
+                        change = True
+                    elif key == ord("d"):
+                        #up
+                        refPts = self.mouse.get_refPts()
+                        refPts[-2][0] = refPts[-2][0] + 1
+                        refPts[-1][0] = refPts[-1][0] + 1
+                        self.mouse.set_refPts(refPts)
+                        change = True
+                    elif key == ord("a"):
+                        #up
+                        refPts = self.mouse.get_refPts()
+                        refPts[-2][0] = refPts[-2][0] - 1
+                        refPts[-1][0] = refPts[-1][0] - 1
+                        self.mouse.set_refPts(refPts)
+                        change = True
+
                     # if the 'c' key is pressed, break from the loop
                     elif key == ord("c"):
                         break
+                    #print(key)
+                    if change:
+                        change = False
+                        img = clone.copy()
+                        for i in range(0,len(refPts),2):
+                            cv2.rectangle(img, tuple(refPts[i]), tuple(refPts[i+1]), (0, 255, 255), 1)
+                        self.mouse.set_image(image=img)
 
-                # if there are two reference points, then crop the region of interest
-                # from teh image and display it
-                refPt = self.mouse.get_refPt()
-                if len(refPt) == 2:
-                    roi = clone[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
-                    roi_scaled = cv2.resize(roi,(self.xpixel,self.ypixel))
-                    newname = self.getNewName(fname,'Rectangle')
-                    print(newname)
-                    cv2.imwrite(newname,roi_scaled)
-
-                    roi = clone[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
-                    roi_scaled = cv2.resize(roi,(2*self.xpixel,2*self.ypixel))
-                    newname = self.getNewName(fname,'Rectanglex2')
-                    print(newname)
-                    cv2.imwrite(newname,roi_scaled)
-
-                    roi = clone[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
-                    roi_scaled = cv2.resize(roi,(4*self.xpixel,4*self.ypixel))
-                    newname = self.getNewName(fname,'Rectanglex4')
-                    print(newname)
-                    cv2.imwrite(newname,roi_scaled)
-
-
-                    newname2 = self.getNewName(fname,'NotScaled')
-                    cv2.imwrite(newname2,roi)                    
-                    #cv2.imshow("ROI", roi)
-                    #cv2.waitKey(0)
-                    center = (int((refPt[0][0]+refPt[1][0])/2), int((refPt[0][1]+refPt[1][1])/2))
-                    radius = int(0.5*math.sqrt(\
-                                               (refPt[1][1]-refPt[0][1])*\
-                                               (refPt[1][1]-refPt[0][1])+\
-                                               (refPt[1][0]-refPt[0][0])*\
-                                               (refPt[1][0]-refPt[0][0])))
-                    #print("writing with added rectangle :", newname)
-                    #cv2.rectangle(clone, refPt[0], refPt[1], (255, 255, 255), -2)
-                    cv2.circle(clone, center, radius, (255, 255, 255), thickness=-2)
-                    newname3 = self.getNewName(fname,'NegativeSamples')
-                    cv2.imwrite(newname3,clone)
+                self.saveImage(clone.copy(), self.mouse.get_ratio(), fname)
+                self.mouse.reset()
 
                 # close all open windows
                 cv2.destroyAllWindows()
