@@ -1,3 +1,5 @@
+# python3 ./showVideo.py /home/mka/Videos/mersu1.mp4
+
 import cv2
 import numpy as np
 import sys
@@ -43,7 +45,7 @@ class QtCapture(QtWidgets.QWidget):
                 cv2.cvtColor(frame, cv2.COLOR_BGR2RGB, frame)
                 #cv2.flip(frame, 1, frame)
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                rekkaris = self.rekkari_cascade.detectMultiScale(gray, 1.1, 5)
+                rekkaris = self.rekkari_cascade.detectMultiScale(gray, 1.03, 3, minSize=(5,18))
                 for (x,y,w,h) in rekkaris:
                     cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),5)
                 self.frames.append(frame)
