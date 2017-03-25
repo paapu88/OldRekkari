@@ -1,6 +1,6 @@
-# python3 ../../picture2rectangle.py 5
+# python3 picture2rectangle.py 10 15
 # in a directory containing only jpg (png) files
-# the argument is the lowest resolution in pixe in y (vertical) direction
+# the arguments are initial box size in x and y
 """
 1) Read selected picture (automated)
 2) make rectangle to it by mouse lef button
@@ -19,8 +19,8 @@ Finnish car number plate: 118 mm x 442 mm
 """
 
 import sys
-from PyQt5.QtWidgets import (QMainWindow, QTextEdit, 
-    QAction, QFileDialog, QApplication, QWidget, QVBoxLayout, QPushButton, QLabel)
+from PyQt5.QtWidgets import QMainWindow, QTextEdit, \
+    QAction, QFileDialog, QApplication, QWidget, QVBoxLayout, QPushButton, QLabel
 from PyQt5.QtGui import QIcon
 import numpy as np
 import cv2
@@ -49,8 +49,12 @@ class MouseRectangle():
         self.refPts = refPts
 
     def set_ratio(self, ratio):
-        # assume long eu plates
-        self.ratio = 442/118
+        """self y/x ratio for the selection box"""
+        if self.ratio is not None:
+            self.ratio = ratio
+        else:
+            # assume long eu plates
+            self.ratio = 442/118
 
     def get_ratio(self):
         return self.ratio
@@ -193,27 +197,33 @@ class Example(QWidget):
         #        print(fname[0])
                 # cv2.namedWindow('image')
         #        img = cv2.imread(fname[0],0)
-                img = cv2.imread(fname)
+                img = cv2.imread(fname,0)
                 print("size:", img.shape[0], img.shape[1])
+                #plt.imshow(img, cmap = 'gray', interpolation = 'bicubic')
+                #plt.xticks([]), plt.yticks([])  # to hide tick values on X,Y axis
+                #plt.show()
+                #cv2.imshow('image', img)
+                #cv2.waitKey(0)
+                #sys.exit()
                 #if (img.shape[0] > 1000):
                 #    img = cv2.resize(img, (int(img.shape[0]/2), int(img.shape[1]/2)))
                 clone = img.copy()
                 self.mouse.set_image(image=img)
-                cv2.imshow('image', img)
 
                 #cv2.setMouseCallback('image', plot_xy)
                 #cv2.setMouseCallback('image', self.mouse.plot_xy)
                 cv2.setMouseCallback('image', self.mouse.click_and_crop)
 
-                #plt.imshow(img, cmap = 'gray', interpolation = 'bicubic')
-                #plt.xticks([]), plt.yticks([])  # to hide tick values on X,Y axis
-                #plt.show()
+                print("still alive 1")
 
                 # keep looping until the 'q' key is pressed
                 while True:
                     # display the image and wait for a keypress
+                    print("still alive 2")
                     cv2.imshow("image", img)
-                    key = cv2.waitKey(33)
+                    print("still alive 3")
+                    key = cv2.waitKey(33) & 0xFF
+                    print("still alive 4")
                     change = False
                     # if the 'r' key is pressed, reset the cropping region
                     if key == ord("r"):
