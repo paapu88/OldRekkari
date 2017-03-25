@@ -12,7 +12,7 @@ import sys
 
 
 class VideoIO():
-    def __init__(self, videoFileName=None, fps=24, first_frame=0, last_frame=None, colorChange=cv2.COLOR_YUV2GRAY_420):
+    def __init__(self, videoFileName=None, fps=24, first_frame=0, last_frame=None, colorChange=cv2.COLOR_RGB2GRAY):
 
         self.fps = fps
         self.videoFileName = videoFileName
@@ -23,6 +23,14 @@ class VideoIO():
         self.n_frames=None
         self.frames=None
         print ("INIT OK")
+
+    def changeColor(self, imageIn):
+        if self.colorChange=='mok.COLOR_YUV2GRAY_420':
+            N=imageIn[0]*imageIn[1]
+            print("N",N, N.shape)
+            sys.exit()
+        else:
+            return cv2.cvtColor(imageIn, self.colorChange)
 
     def readVideoFrames(self, videoFileName=None):
         """ read in frames and convert to desired format"""
@@ -50,8 +58,10 @@ class VideoIO():
         cap.set(cv2.CAP_PROP_POS_FRAMES, first_frame)
         while True:
             flag, frame = cap.read()
+            print("FRAME:", frame.shape)
             if flag:
-                gray = cv2.cvtColor(frame, self.colorChange)
+                gray = self.changeColor(imageIn=frame)
+                #gray = cv2.cvtColor(frame, self.colorChange)
                 self.frames.append(gray)
                 pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
                 print (str(pos_frame)+" frames")
@@ -62,9 +72,7 @@ class VideoIO():
                 # It is better to wait for a while for the next frame to be ready
                 cv2.waitKey(1000)
 
-            k = cv2.waitKey(0) & 0xFF
-            if k == 27:
-                break
+
             if cap.get(cv2.CAP_PROP_POS_FRAMES) == last_frame+1:
                 # If the number of captured frames is equal to the total number of frames,
                 # we stop
@@ -91,7 +99,8 @@ class VideoIO():
 if __name__ == '__main__':
     import sys
     videoFileName=sys.argv[1]
-    video2images = VideoIO(videoFileName=videoFileName,first_frame=100, last_frame=120, colorChange=cv2.COLOR_YUV2GRAY_420)
+    video2images = VideoIO(videoFileName=videoFileName,first_frame=119, last_frame=120,
+                           colorChange=cv2.COLOR_RGB2GRAY)
     video2images.readVideoFrames(videoFileName=videoFileName)
     video2images.writeAllImages(prefix=videoFileName)
 
