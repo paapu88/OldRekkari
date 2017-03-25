@@ -2,6 +2,7 @@
 
 import numpy as np
 import cv2
+import sys
 
 # idendify rekkari.jpeg gives 259X194
 
@@ -14,20 +15,27 @@ import cv2
 #cv2.destroyAllWindows()
 
 # load and show video
-cap = cv2.VideoCapture('/home/mka/Downloads/test.mp4')
+#cap = cv2.VideoCapture('/home/mka/Downloads/test.mp4')
+cap = cv2.VideoCapture(sys.argv[1])
 frames = []
+
+    
+
 while(cap.isOpened()):
+    #try:
+    ret, frame = cap.read()
+        #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #cv2.imshow('frame',gray)
+    frame = cv2.transpose(frame)
+    frame = cv2.flip(frame, flipCode=1)
+    ok_color = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    cv2.imshow('frame',ok_color)        
+    #except:
+    #    break
+
     try:
-        ret, frame = cap.read()
-
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        cv2.imshow('frame',gray)
-    except:
-        break
-
-    try:
-        frames.append(gray)
+        #frames.append(gray)
+        frames.append(ok_color)
     except:
         pass
     if cv2.waitKey(1) & 0xFF == ord('q'):
