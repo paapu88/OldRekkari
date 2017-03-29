@@ -1,7 +1,7 @@
 """
-python3 ~/PycharmProjects/Rekkari/video2images.py "Rekisteri_4_short.mp4"
+python3 ~/PycharmProjects/Rekkari/video2images.py "Rekkari_test_gate_100sec.mp4" 0 30
 Functions related to read and write videos and images in opencv
-
+filename firstFrame lastFrame
 """
 
 
@@ -99,7 +99,12 @@ class VideoIO():
 if __name__ == '__main__':
     import sys
     videoFileName=sys.argv[1]
-    video2images = VideoIO(videoFileName=videoFileName,first_frame=119, last_frame=120,
+    first_frame=int(sys.argv[2])
+    last_frame=int(sys.argv[3])
+    
+    video2images = VideoIO(videoFileName=videoFileName,
+                           first_frame=first_frame,
+                           last_frame=last_frame,
                            colorChange=cv2.COLOR_RGB2GRAY)
     video2images.readVideoFrames(videoFileName=videoFileName)
     video2images.writeAllImages(prefix=videoFileName)
