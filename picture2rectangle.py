@@ -20,7 +20,8 @@ Finnish car number plate: 118 mm x 442 mm
 
 import sys
 from PyQt5.QtWidgets import QMainWindow, QTextEdit, \
-    QAction, QFileDialog, QApplication, QWidget, QVBoxLayout, QPushButton, QLabel
+    QAction, QFileDialog, QApplication, QWidget, \
+    QVBoxLayout, QPushButton, QLabel
 from PyQt5.QtGui import QIcon
 import numpy as np
 import cv2
@@ -212,7 +213,7 @@ class Example(QWidget):
 
                 #cv2.setMouseCallback('image', plot_xy)
                 #cv2.setMouseCallback('image', self.mouse.plot_xy)
-                cv2.setMouseCallback('image', self.mouse.click_and_crop)
+                #cv2.setMouseCallback('image', self.mouse.click_and_crop)
 
                 print("still alive 1")
 
